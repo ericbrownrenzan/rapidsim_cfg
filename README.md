@@ -22,6 +22,7 @@ RapidSim config files are:
 - Order-sensitive
 - Whitespace-sensitive
 - Hard to edit by hand safely
+
 This package guarantees:
 - Correct particle numbering
 - Correct decay syntax
