@@ -1,128 +1,98 @@
-"""
-Models a RapidSim .decay line and CANONICALLY determines particle ordering.
-
-RapidSim's own parser reads the decay line left→right and numbers particles by:
-
-  Pass 1:  @0 = mother
-  Pass 2:  @1,@2,... = each {intermediate -> ...} block's head particle,
-           in left→right order of the {} blocks
-  Pass 3:  @N+1,@N+2,... = leaf (final-state) particles,
-           iterating blocks left→right, and within each block left→right
-
-This module reproduces exactly that ordering so the .config @0,@1,@2...
-blocks come out in the same sequence RapidSim would assign.
-"""
-
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Dict
 
-
-# ────────────────────────────────────────────────────────────────────
-# Core data structure
-# ────────────────────────────────────────────────────────────────────
 
 @dataclass
 class DecayBlock:
-    """
-    One { X -> a b ... } sub-decay block.
-
-    Attributes
-    ----------
-    intermediate : str
-        The resonant/intermediate particle NAME AS IT APPEARS IN THE BLOCK HEAD
-        (e.g. "Jpsi", "phi", "D0").
-    finals : List[str]
-        Final-state particle names (e.g. ["mu+","mu-"] or ["K+","K-"]).
-        MUST be length ≥ 1.  These are *not* further expanded — they are
-        leaf particles that must exist in particles.dat.
-    """
+    """One { intermediate -> f1 f2 ... }"""
     intermediate: str
     finals: List[str]
 
     def __post_init__(self):
         if not self.finals:
             raise ValueError(
-                f"DecayBlock for '{self.intermediate}' has no final states; "
-                f"write at least one leaf particle."
+                f"DecayBlock('{self.intermediate}'): finals must be non-empty"
             )
 
 
-@dataclass
 class DecayLine:
     """
-    Represents ONE decay-line:
-
-        mother -> {X1 -> a b} {X2 -> c d} ...
-
-    The *order of blocks matters*: it determines @-index assignment.
+    Represent ONE decay line with canonical RapidSim numbering.
+    
+    Example:
+        B+ -> { Jpsi -> mu+ mu- } { phi -> K+ K- } K+
     """
-    mother: str
-    blocks: List[DecayBlock] = field(default_factory=list)
 
-    # ── canonical index assignment ─────────────────────────────────
+    def __init__(
+        self,
+        mother: str,
+        blocks: Optional[List[DecayBlock]] = None,
+        direct_finals: Optional[List[str]] = None,
+    ):
+        self.mother = mother
+        self.blocks: List[DecayBlock] = list(blocks or [])
+        self.direct_finals: List[str] = list(direct_finals or [])
 
-    def particle_index_table(self) -> List[Tuple[int, str, str]]:
+    def particle_index_table(self) -> List[Tuple[int, str, str, Optional[str]]]:
         """
-        Return [(index, role, particle_name), ...] in RapidSim-canonical order.
-
-        role ∈ {"mother", "intermediate", "final"}
+        Returns [(index, role, particle_name, context), ...]
+        
+        role ∈ {"mother","intermediate","direct_final","daughter"}
+        context = None or intermediate name (for daughters)
         """
-        table: List[Tuple[int, str, str]] = []
+        table: List[Tuple[int, str, str, Optional[str]]] = []
 
-        # Pass 1
-        table.append((0, "mother", self.mother))
+        # @0: mother
+        table.append((0, "mother", self.mother, None))
 
-        # Pass 2 – intermediates (left→right blocks)
+        # @1..@Ninter: {} block heads
         for blk in self.blocks:
-            table.append((len(table), "intermediate", blk.intermediate))
+            table.append((len(table), "intermediate", blk.intermediate, None))
 
-        # Pass 3 – finals (blocks left→right, within-block left→right)
+        # direct finals
+        for p in self.direct_finals:
+            table.append((len(table), "direct_final", p, None))
+
+        # daughters of each {} block
         for blk in self.blocks:
-            for f in blk.finals:
-                table.append((len(table), "final", f))
+            for d in blk.finals:
+                table.append((len(table), "daughter", d, blk.intermediate))
 
         return table
 
-    def particle_index_map(self) -> dict:
-        """{particle_name: index} — last occurrence wins if duplicated."""
-        return {name: idx for idx, _, name in self.particle_index_table()}
-
-    # ── render .decay line ──────────────────────────────────────────
-
     def render(self) -> str:
-        inner = " ".join(
+        blocks_str = " ".join(
             f"{{ {blk.intermediate} -> {' '.join(blk.finals)} }}"
             for blk in self.blocks
         )
-        return f"{self.mother} -> {inner}"
-
-    # ── convenience constructors ───────────────────────────────────
-
-    @classmethod
-    def build(cls, mother: str, **block_spec) -> "DecayLine":
-        """
-        DecayLine.build("Bs0", Jpsi=["mu+","mu-"], phi=["K+","K-"])
-        """
-        blocks = []
-        for inter, fins in block_spec.items():
-            if not isinstance(fins, (list, tuple)):
-                fins = [fins]
-            blocks.append(DecayBlock(intermediate=inter, finals=list(fins)))
-        return cls(mother=mother, blocks=blocks)
+        parts = [f"{self.mother} ->", blocks_str]
+        if self.direct_finals:
+            parts.append(" ".join(self.direct_finals))
+        return " ".join(parts)
 
     @classmethod
-    def from_dict(cls, d: dict) -> "DecayLine":
-        """
-        {
-            "mother": "Bs0",
-            "branches": {"Jpsi": ["mu+","mu-"], "phi": ["K+","K-"]}
-        }
-        """
-        mother = d["mother"]
-        branches = d["branches"]
-        blocks = [
-            DecayBlock(intermediate=k, finals=v if isinstance(v, list) else [v])
-            for k, v in branches.items()
-        ]
-        return cls(mother=mother, blocks=blocks)
+    def build(
+        cls,
+        mother: str,
+        /,
+        *,
+        intermediates: Optional[Dict[str, List[str]]] = None,
+        direct_finals: Optional[List[str]] = None,
+        **kw_intermediates,
+    ) -> "DecayLine":
+        if intermediates is not None:
+            blocks = [
+                DecayBlock(k, list(v))
+                for k, v in intermediates.items()
+            ]
+            return cls(mother=mother, blocks=blocks, direct_finals=direct_finals)
+
+        if kw_intermediates:
+            blocks = [
+                DecayBlock(k, list(v))
+                for k, v in kw_intermediates.items()
+            ]
+            return cls(mother=mother, blocks=blocks)
+
+        return cls(mother=mother)

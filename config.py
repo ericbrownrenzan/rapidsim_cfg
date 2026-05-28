@@ -19,18 +19,26 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 
-def _sanitize_branch_name(s: str) -> str:
+def _sanitize_branch_name(s: str, context: Optional[str] = None) -> str:
     """
-    Roughly what RapidSim does to make a ROOT-safe branch label
-    (you can override per-particle via explicit `name:` in overrides).
+    Convert particle name to a valid ROOT branch name.
+
+    If context is provided (e.g., "phi"), append it to distinguish
+    duplicate particles from different parents.
     """
-    return (
+    base = (
         s.replace("+", "p")
          .replace("-", "m")
          .replace("~", "anti")
          .replace("#", "")
          .replace("*", "star")
     )
+
+    if context:
+        # Clean context name too
+        ctx = context.replace("+", "p").replace("-", "m")
+        return f"{base}_{ctx}"
+    return base
 
 
 def _fmt(v: Any) -> str:
@@ -142,21 +150,13 @@ class GlobalSettings:
 
 
 # ────────────────────────────────────────────────────────────────────
-
 class ParticleBlock:
-    """
-    One @N block in the .config file.
-
-    `particle_name` is the particles.dat lookup key (mu+, Bs0, Jpsi …).
-    `user_name` is the optional `name :` (branch-label).  When None,
-    the generator will derive one via _sanitize_branch_name().
-    """
-
     def __init__(
         self,
         *,
         index: int,
         particle_name: str,
+        context: Optional[str] = None,  # NEW: where this particle came from
         user_name: Optional[str] = None,
         smear: Optional[Union[str, List[str]]] = None,
         invisible: Optional[bool] = None,
@@ -166,6 +166,7 @@ class ParticleBlock:
     ):
         self.index = index
         self.particle_name = particle_name
+        self.context = context
         self.user_name = user_name
         self.smear = smear
         self.invisible = invisible
@@ -175,9 +176,15 @@ class ParticleBlock:
 
     def render(self) -> str:
         lines = [f"@{self.index}"]
-        # If caller never set user_name, derive from particle_name
-        nm = self.user_name if self.user_name is not None else _sanitize_branch_name(self.particle_name)
+        
+        # Use context-aware naming if no explicit user_name
+        if self.user_name is None:
+            nm = _sanitize_branch_name(self.particle_name, self.context)
+        else:
+            nm = self.user_name
+            
         lines.append(f"\tname : {nm}")
+        
         if self.smear:
             if isinstance(self.smear, (list, tuple)):
                 for s in self.smear:

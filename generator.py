@@ -45,12 +45,15 @@ class RapidSimProject:
         table = self.decay.particle_index_table()
 
         self.particle_blocks = []
-        for idx, role, pname in table:
+        for idx, role, pname, context in table:
             ov = overrides.get(pname, {})
+            user_name = ov.get("user_name")
+
             pb = ParticleBlock(
                 index=idx,
                 particle_name=pname,
-                user_name=ov.get("user_name", None),
+                context=context,  # Pass context for smart naming
+                user_name=user_name,
                 smear=ov.get("smear", default_smear),
                 invisible=ov.get("invisible", None),
                 altMass=ov.get("altMass", None),
