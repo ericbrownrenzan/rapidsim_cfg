@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="RapidSim_Cfg",
+    name="rapidsim_cfg",
     version="0.1.0",
     author="Zan Ren",
     author_email="zan.ren@cern.ch",
