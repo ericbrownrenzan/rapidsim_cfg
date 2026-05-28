@@ -13,7 +13,7 @@ decay = build_cascade_decay(
             "Jpsi": ["mu+", "mu-"],
             "gamma": [],
         },
-        "pi0" : ["gamma", "gamma"],
+        #"pi0" : ["gamma", "gamma"],
         "phi": ["K+", "K-"],
     },
     direct_finals=["K+"],
@@ -38,8 +38,8 @@ proj.autopopulate_particles(
         "mu+": {},
         "mu-": {},
         "K-": {"smear": "LHCbGenericIP"},
-        "pi0": {"user_name": "mypi0"}
+        #"pi0": {"user_name": "mypi0"}
     },
 )
 
-proj.write("Bplus2Psi2sphiKpi0")
+proj.write("Bplus2Psi2sphiK")
