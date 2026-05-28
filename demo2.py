@@ -6,11 +6,6 @@ from rapidsim_cfg import (
     GlobalSettings,
 )
 
-from rapidsim_cfg import DecayLine, DecayBlock
-
-# Lambda0 -> p+ pi-   (treated as leaf here; if Lambda0 itself decays, wrap similarly)
-lambda0_leaf = "Lambda0"   # leaf string
-
 # Lambdac+ -> { Lambda0 -> p+ pi- } pi+
 lambdac = DecayBlock(
     intermediate="Lambdac+",

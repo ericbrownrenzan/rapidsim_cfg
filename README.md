@@ -16,7 +16,7 @@ pip install -e .
 ```
 
 ## Quick Start
-See `demo.py`
+See `demo.py` and `demo2.py`
 ## Why This Package Exists
 RapidSim config files are:
 - Order-sensitive
