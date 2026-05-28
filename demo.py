@@ -39,7 +39,7 @@ proj.autopopulate_particles(
         "phi": {},
         "mu+": {},
         "mu-": {},
-        "K-": {},
+        "K-": {"smear": "LHCbGenericIP"},
         "pi0": {"user_name": "mypi0"}
     },
 )
