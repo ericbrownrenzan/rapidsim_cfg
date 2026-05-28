@@ -21,12 +21,10 @@ decay = build_cascade_decay(
 
 gs = GlobalSettings(
     seed=12345,
-    acceptance="LHCb",
     geometry="LHCb",
     energy=13,
-    maxAttempts=10000,
-    paramsStable=["P", "PT", "ETA", "PHI"],
-    paramsDecaying=["M", "P", "PT", "ETA", "PHI"],
+    paramsStable=["P", "PT", "PX", "PY", "PZ"],
+    paramsDecaying=["M", "P", "PT", "eta", "phi", "y"],
 )
 
 proj = RapidSimProject(decay=decay, global_settings=gs)
