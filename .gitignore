@@ -3,3 +3,4 @@ __pycache__/
 RapidSim_Cfg.egg-info/
 Bplus2Psi2sphiKpi0/
 Lb2SigmacDKpi0/
+*.root

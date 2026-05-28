@@ -38,12 +38,12 @@ print(decay.render())
 
 gs = GlobalSettings(
     seed=12345,
-    acceptance="LHCb",
+    acceptance="AllIn",
     geometry="LHCb",
     energy=13,
     maxAttempts=10000,
-    paramsStable=["P", "PT", "ETA", "PHI"],
-    paramsDecaying=["M", "P", "PT", "ETA", "PHI"],
+    paramsStable=["P", "PT", "PX", "PY", "PZ", "E", "M", "eta", "phi", "ProbNNp", "ProbNNk", "ProbNNpi", "IP", "y"],
+    paramsDecaying=["M", "P", "PT", "eta", "phi", "vtxX", "vtxY", "vtxZ", "IP", "MINIP", "SIGMAIP", "SIGMAMINIP", "FD", "y", "PX", "PY", "PZ", "E"],
 )
 
 proj = RapidSimProject(decay=decay, global_settings=gs)
