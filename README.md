@@ -16,50 +16,7 @@ pip install -e .
 ```
 
 ## Quick Start
-```python
-from rapidsim_cfg import (
-    RapidSimProject,
-    DecayLine,
-    DecayBlock,
-    GlobalSettings,
-)
-
-decay = DecayLine(
-    mother="B+",
-    blocks=[
-        DecayBlock("Jpsi", ["mu+", "mu-"]),
-        DecayBlock("phi", ["K+", "K-"]),
-    ],
-    direct_finals=["K+","pi0"],
-)
-
-gs = GlobalSettings(
-    seed=12345,
-    acceptance="LHCb",
-    geometry="LHCb",
-    energy=13,
-    maxAttempts=10000,
-    paramsStable=["P", "PT", "ETA", "PHI"],
-    paramsDecaying=["M", "P", "PT", "ETA", "PHI"],
-)
-
-proj = RapidSimProject(decay=decay, global_settings=gs)
-
-proj.autopopulate_particles(
-    default_smear="LHCbGeneric",
-    overrides={
-        "B+": {"user_name":"myBplus"},
-        "Jpsi": {},
-        "phi": {},
-        "mu+": {},
-        "mu-": {},
-        "K-": {},
-        "pi0": {"user_name": "mypi0"}
-    },
-)
-
-proj.write("Bplus2JpsiphiKpi0")
-```
+See `demo.py`
 ## Why This Package Exists
 RapidSim config files are:
 - Order-sensitive
