@@ -44,6 +44,9 @@ gs = GlobalSettings(
     maxAttempts=10000,
     paramsStable=["P", "PT", "PX", "PY", "PZ", "E", "M", "eta", "phi", "ProbNNp", "ProbNNk", "ProbNNpi", "IP", "y"],
     paramsDecaying=["M", "P", "PT", "eta", "phi", "vtxX", "vtxY", "vtxZ", "IP", "MINIP", "SIGMAIP", "SIGMAMINIP", "FD", "y", "PX", "PY", "PZ", "E"],
+    useEvtGen=True,
+    evtGenUsePHOTOS=True,
+    extra = { "param" : "mKpi_Dm M 7 8"}
 )
 
 proj = RapidSimProject(decay=decay, global_settings=gs)
@@ -56,8 +59,11 @@ proj.autopopulate_particles(
         #"Lambdac+": {},
         #"Lambdab0": {},
         #"pi+" : {},
-        "D-" : {},
-        #"K-": {"user_name": "bachelar_K", "smear": "LHCbGenericIP"},
+        "D-" : {"evtGenModel": "D_DALITZ"},
+        "K-": { "smear": [ "LHCbGenericIP", "LHCbGeneric"]},
+        "p+": { "smear": [ "LHCbGenericIP", "LHCbGeneric"]},
+        "pi+": { "smear": [ "LHCbGenericIP", "LHCbGeneric"]},
+        "pi-": { "smear": [ "LHCbGenericIP", "LHCbGeneric"]},
         #"pi0": {"user_name": "mypi0"}
     },
 )
