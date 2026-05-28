@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from .decay import DecayLine
-from .config import GlobalSettings, ParticleBlock
+from .config import GlobalSettings, ParticleBlock, _sanitize_branch_name
 
 
 class RapidSimProject:
@@ -24,14 +24,13 @@ class RapidSimProject:
         self.particle_blocks: List[ParticleBlock] = list(particle_blocks or [])
 
     # ── auto-build @0,@1,@2... blocks from decay ordering ────────────
-
+    """
     def autopopulate_particles(
         self,
         *,
         default_smear: Optional[str] = None,
         overrides: Optional[Dict[str, Dict]] = None,
     ) -> "RapidSimProject":
-        """
         Fill self.particle_blocks from the decay line's canonical index table.
 
         overrides = {
@@ -40,7 +39,6 @@ class RapidSimProject:
             ...
         }
         Keys match particle_name (the particles.dat lookup key), NOT user_name.
-        """
         overrides = overrides or {}
         table = self.decay.particle_index_table()
 
@@ -63,7 +61,46 @@ class RapidSimProject:
             self.particle_blocks.append(pb)
 
         return self
+    """
+    def autopopulate_particles(
+        self,
+        *,
+        default_smear: Optional[str] = None,
+        overrides: Optional[Dict[str, Dict]] = None,
+    ) -> "RapidSimProject":
+        overrides = overrides or {}
+        table = self.decay.particle_index_table()
 
+        self.particle_blocks = []
+        
+        for idx, role, pname, context in table:
+            ov = overrides.get(pname, {})
+            
+            # 生成 user_name：粒子名 + 上下文 + @index（保证绝对唯一）
+            if ov.get("user_name"):
+                user_name = ov["user_name"]
+            else:
+                base = _sanitize_branch_name(pname)
+                if context:
+                    ctx = _sanitize_branch_name(context)
+                    user_name = f"{base}_{ctx}_{idx}"
+                else:
+                    user_name = f"{base}_{idx}"
+            
+            self.particle_blocks.append(
+                    ParticleBlock(
+                        index=idx,
+                        particle_name=pname,
+                        context=context,
+                        user_name=user_name,  # 现在绝对唯一
+                        smear=ov.get("smear", default_smear),
+                        invisible=ov.get("invisible", None),
+                        altMass=ov.get("altMass", None),
+                        evtGenModel=ov.get("evtGenModel", None),
+                        extra=ov.get("extra", {}),
+                        )
+                    )
+        return self
     # ── rendering ────────────────────────────────────────────────────
 
     def render_decay(self) -> str:
