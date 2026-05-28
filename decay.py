@@ -97,17 +97,16 @@ class DecayLine:
         # 1. mother
         order.append((0, "mother", self.mother, None))
 
-        # 2. 顶层 {} 块头
+        # 2. top blocks
         top_blocks = []
         for blk in self.blocks:
             top_blocks.append(blk)
             order.append((len(order), "intermediate", blk.intermediate, None))
 
-        # 3. 顶层直接末态
+        # 3. direct_finals
         for p in self.direct_finals:
             order.append((len(order), "direct_final", p, None))
 
-        # 4. 处理顶层块的内部（先嵌套块头，后非块末态）
         nested_blocks = []  # 收集嵌套块，以便后续处理
         for blk in top_blocks:
             # 收集该块的内部块头（嵌套块）
@@ -120,13 +119,11 @@ class DecayLine:
                 if not isinstance(final, DecayBlock):
                     order.append((len(order), "daughter", final, blk.intermediate))
 
-        # 5. 处理嵌套块的内部（递归处理非块末态）
         def process_nested(block: DecayBlock, parent_ctx: str):
             for final in block.finals:
                 if not isinstance(final, DecayBlock):
                     order.append((len(order), "daughter", final, parent_ctx))
                 else:
-                    # 如果有更深层的嵌套，递归处理
                     process_nested(final, final.intermediate)
 
         for nb in nested_blocks:
