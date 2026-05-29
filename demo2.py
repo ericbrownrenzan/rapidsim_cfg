@@ -54,7 +54,7 @@ proj = RapidSimProject(decay=decay, global_settings=gs)
 proj.autopopulate_particles(
     default_smear="LHCbGeneric",
     overrides={
-        #"Lambdab0": {"user_name":"myLb"},
+        "Lambdab0": {"user_name":"myLb"},
         #"Sigmacc++": {},
         #"Lambdac+": {},
         #"Lambdab0": {},
