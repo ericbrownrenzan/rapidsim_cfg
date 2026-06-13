@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - python=3.12
   - hepmc2=2.06.07
   - hepmc3=3.2.3
   - rapidsim=1.5
