@@ -25,7 +25,16 @@ class RapidSimProject:
         self.global_settings = global_settings or GlobalSettings()
         self.particle_blocks: List[ParticleBlock] = list(particle_blocks or [])
         if particle_table_path is None:
-            root = os.environ.get("RAPIDSIM_ROOT", "")
+            config_env = os.environ.get("RAPIDSIM_CONFIG")
+            root_env = os.environ.get("RAPIDSIM_ROOT", "")
+            if config_env:
+                root = config_env
+                # 蓝色文字提示用户自定义路径
+                print(f"\033[94m[RapidSimProject] Using user-defined RAPIDSIM_CONFIG path: {root}\033[0m")
+            else:
+                root = root_env
+                # 默认颜色提示默认路径
+                print(f"[RapidSimProject] Using RapidSim default path (RAPIDSIM_ROOT): {root}")
             particle_table_path = os.path.join(root, "config", "particles.dat")
         if not os.path.exists(particle_table_path):
             raise FileNotFoundError(f"Particle table not found: {particle_table_path}")
