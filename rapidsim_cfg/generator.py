@@ -5,6 +5,7 @@ using the CORRECT RapidSim index ordering.
 
 from __future__ import annotations
 import os
+import re
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -33,7 +34,11 @@ class RapidSimProject:
         with open(particle_table_path, "r") as f:
             next(f)  # 跳过标题行
             for line in f:
-                parts = line.strip().split("\t")
+                line = line.strip()
+                if not line:
+                    continue
+                # 使用正则按任意空白字符分割（兼容制表符、空格等）
+                parts = re.split(r'\s+', line)
                 if len(parts) < 3:
                     continue
                 name = parts[1].strip()
@@ -42,6 +47,8 @@ class RapidSimProject:
                     self._valid_particle_names.add(name)
                 if anti and anti != "---":
                     self._valid_particle_names.add(anti)
+        print(f"[RapidSimProject] Loaded {len(self._valid_particle_names)} particle names from {particle_table_path}")
+
     # ── auto-build @0,@1,@2... blocks from decay ordering ────────────
     def autopopulate_particles(
         self,
