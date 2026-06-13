@@ -29,24 +29,28 @@ class RapidSimProject:
             particle_table_path = os.path.join(root, "config", "particles.dat")
         if not os.path.exists(particle_table_path):
             raise FileNotFoundError(f"Particle table not found: {particle_table_path}")
+        # 在 __init__ 中
+        self._particle_names = set()          # 仅正粒子（第2列）
+        self._anti_particle_names = set()     # 仅反粒子（第3列，排除 "---"）
 
-        self._valid_particle_names: set = set()
         with open(particle_table_path, "r") as f:
             next(f)  # 跳过标题行
             for line in f:
                 line = line.strip()
                 if not line:
                     continue
-                # 使用正则按任意空白字符分割（兼容制表符、空格等）
                 parts = re.split(r'\s+', line)
                 if len(parts) < 3:
                     continue
                 name = parts[1].strip()
                 anti = parts[2].strip()
                 if name and name != "---":
-                    self._valid_particle_names.add(name)
+                    self._particle_names.add(name)
                 if anti and anti != "---":
-                    self._valid_particle_names.add(anti)
+                    self._anti_particle_names.add(anti)
+
+        # 保留总集合用于校验（并集）
+        self._valid_particle_names = self._particle_names | self._anti_particle_names
         print(f"[RapidSimProject] Loaded {len(self._valid_particle_names)} particle names from {particle_table_path}")
 
     # ── auto-build @0,@1,@2... blocks from decay ordering ────────────
@@ -125,6 +129,28 @@ class RapidSimProject:
         config_path.write_text(self.render_config(), encoding="utf-8")
 
         print(f"[RapidSimCfg] written:\n  {decay_path}\n  {config_path}")
+
+    # print particle tables
+    def list_particles(self, include_anti: bool = True) -> None:
+        """
+        Print the loaded particle tables.
+
+        Args:
+            include_anti: include the anti-partile or not. the default is True
+        """
+        if not hasattr(self, '_particle_names') or not self._particle_names:
+            print("[RapidSimProject] No particle table loaded.")
+            return
+
+        if include_anti:
+            names = sorted(self._valid_particle_names)   # 直接使用已有的并集
+            print(f"Loaded {len(names)} particle names:")
+        else:
+            names = sorted(self._particle_names)         # 仅正粒子
+            print(f"Loaded {len(names)} particle names, anti-particles are not included:")
+
+        for n in names:
+            print(f"  {n}")
 
     # ── factory from plain dict (YAML/JSON-friendly) ────────────────
 

@@ -49,7 +49,9 @@ gs = GlobalSettings(
     extra = { "param" : "mKpi_Dm M 7 8"}
 )
 
-proj = RapidSimProject(decay=decay, global_settings=gs)
+proj = RapidSimProject()
+proj.decay=decay
+proj.global_settings=gs
 
 proj.autopopulate_particles(
     default_smear="LHCbGeneric",
