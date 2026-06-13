@@ -14,54 +14,35 @@ from .config import GlobalSettings, ParticleBlock, _sanitize_branch_name
 
 class RapidSimProject:
     def __init__(
-        self,
-        decay: DecayLine,
-        global_settings: Optional[GlobalSettings] = None,
-        particle_blocks: Optional[List[ParticleBlock]] = None,
-    ):
+            self,
+            decay: DecayLine,
+            global_settings: Optional[GlobalSettings] = None,
+            particle_blocks: Optional[List[ParticleBlock]] = None,
+            particle_table_path: Optional[str] = None,
+            ):
         self.decay = decay
         self.global_settings = global_settings or GlobalSettings()
         self.particle_blocks: List[ParticleBlock] = list(particle_blocks or [])
+        if particle_table_path is None:
+            root = os.environ.get("RAPIDSIM_ROOT", "")
+            particle_table_path = os.path.join(root, "config", "particles.dat")
+        if not os.path.exists(particle_table_path):
+            raise FileNotFoundError(f"Particle table not found: {particle_table_path}")
 
+        self._valid_particle_names: set = set()
+        with open(particle_table_path, "r") as f:
+            next(f)  # 跳过标题行
+            for line in f:
+                parts = line.strip().split("\t")
+                if len(parts) < 3:
+                    continue
+                name = parts[1].strip()
+                anti = parts[2].strip()
+                if name and name != "---":
+                    self._valid_particle_names.add(name)
+                if anti and anti != "---":
+                    self._valid_particle_names.add(anti)
     # ── auto-build @0,@1,@2... blocks from decay ordering ────────────
-    """
-    def autopopulate_particles(
-        self,
-        *,
-        default_smear: Optional[str] = None,
-        overrides: Optional[Dict[str, Dict]] = None,
-    ) -> "RapidSimProject":
-        Fill self.particle_blocks from the decay line's canonical index table.
-
-        overrides = {
-            "mu+": {"smear": "LHCbGeneric", "user_name": "mup"},
-            "Jpsi": {"smear": "LHCbGeneric"},
-            ...
-        }
-        Keys match particle_name (the particles.dat lookup key), NOT user_name.
-        overrides = overrides or {}
-        table = self.decay.particle_index_table()
-
-        self.particle_blocks = []
-        for idx, role, pname, context in table:
-            ov = overrides.get(pname, {})
-            user_name = ov.get("user_name")
-
-            pb = ParticleBlock(
-                index=idx,
-                particle_name=pname,
-                context=context,  # Pass context for smart naming
-                user_name=user_name,
-                smear=ov.get("smear", default_smear),
-                invisible=ov.get("invisible", None),
-                altMass=ov.get("altMass", None),
-                evtGenModel=ov.get("evtGenModel", None),
-                extra=ov.get("extra", {}),
-            )
-            self.particle_blocks.append(pb)
-
-        return self
-    """
     def autopopulate_particles(
         self,
         *,
@@ -74,6 +55,12 @@ class RapidSimProject:
         self.particle_blocks = []
         
         for idx, role, pname, context in table:
+            if pname not in self._valid_particle_names:
+                raise ValueError(
+                        f"Particle '{pname}' (index {idx}) is not defined in the loaded particle table. "
+                        "Please check the decay file or provide a custom particle table via "
+                        "the 'particle_table_path' argument when creating RapidSimProject."
+                        )
             ov = overrides.get(pname, {})
             
             # 生成 user_name：粒子名 + 上下文 + @index（保证绝对唯一）
