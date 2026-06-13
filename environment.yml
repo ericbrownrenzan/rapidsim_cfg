@@ -1,0 +1,11 @@
+name: base
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - hepmc2=2.06.07
+  - hepmc3=3.2.3
+  - rapidsim=1.5
+  - root_base=6.32.0
+  - uproot=5.4.2
+  - uproot-base=5.3.12
