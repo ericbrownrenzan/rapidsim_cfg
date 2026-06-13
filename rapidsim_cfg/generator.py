@@ -36,6 +36,8 @@ class RapidSimProject:
                 # 默认颜色提示默认路径
                 print(f"[RapidSimProject] Using RapidSim default path (RAPIDSIM_ROOT): {root}")
             particle_table_path = os.path.join(root, "config", "particles.dat")
+        else:
+            print(f"\033[94m[RapidSimProject] Using user-defined particle table path: {particle_table_path}\033[0m")
         if not os.path.exists(particle_table_path):
             raise FileNotFoundError(f"Particle table not found: {particle_table_path}")
         # 在 __init__ 中
