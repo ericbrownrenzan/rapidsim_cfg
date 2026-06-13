@@ -28,7 +28,7 @@ gs = GlobalSettings(
 )
 
 #proj = RapidSimProject(decay=decay, global_settings=gs)
-proj = RapidSimProject()
+proj = RapidSimProject(particle_table_path="./particles.dat")
 proj.decay=decay
 proj.global_settings=gs
 proj.list_particles()          # 打印所有粒子名（含反粒子）
