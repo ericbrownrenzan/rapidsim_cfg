@@ -16,7 +16,7 @@ from .config import GlobalSettings, ParticleBlock, _sanitize_branch_name
 class RapidSimProject:
     def __init__(
             self,
-            decay: DecayLine,
+            decay: Optional[DecayLine] = None,
             global_settings: Optional[GlobalSettings] = None,
             particle_blocks: Optional[List[ParticleBlock]] = None,
             particle_table_path: Optional[str] = None,
