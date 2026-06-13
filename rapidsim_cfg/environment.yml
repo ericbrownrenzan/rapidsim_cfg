@@ -8,5 +8,7 @@ dependencies:
   - hepmc3=3.2.3
   - rapidsim=1.5
   - root_base=6.32.0
+  - photos=3.64
+  - evtgen=2.2.1
   - uproot=5.4.2
   - uproot-base=5.3.12
